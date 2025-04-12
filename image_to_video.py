@@ -55,7 +55,8 @@ def generate_video_from_image(client, image_response):
         fname = f'with_image_input{n}.mp4'
         print(fname)
         # generated_video.video.save(fname)
-        display(generated_video.video.show())
+        print(generated_video)
+        display(generated_video.video)
     
     return None
 
