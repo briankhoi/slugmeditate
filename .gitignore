@@ -16,3 +16,5 @@
 *.bin
 *.db
 *.ini
+node_modules
+gaussian-splatting
