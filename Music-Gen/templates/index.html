@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WebXR Music Generator</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-event-set-component@5.0.0/dist/aframe-event-set-component.min.js"></script>
+    <style>
+        .debug-panel {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            font-family: monospace;
+            z-index: 9999;
+            max-width: 400px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Debug panel for asset loading -->
+    <div id="debug-panel" class="debug-panel">Asset loading status will appear here...</div>
+
+    <a-scene fog="type: linear; color: #C8E6C9; near: 1; far: 10">
+        <a-assets timeout="10000">
+            <!-- Preload audio will be dynamically updated -->
+            <audio id="generated-music" preload="auto"></audio>
+            <img id="skyTexture" src="static/scenery.jpg" crossorigin="anonymous">
+            <a-asset-item id="splatModel" src="static/model.splat"></a-asset-item>
+        </a-assets>
+
+        <!-- Sky and ground -->
+        <a-sky src="#skyTexture"></a-sky>
+        <a-plane position="0 0 -4" rotation="-90 0 0" width="10" height="10" color="#A5D6A7"></a-plane>
+
+        <!-- Loading Bar -->
+        <a-plane id="loading-bar" position="0 2 -3" width="2" height="0.2" color="#999" visible="false">
+            <a-animation attribute="scale" to="1 1 1" dur="500" repeat="indefinite" direction="alternate"></a-animation>
+            <a-text value="Generating Music..." align="center" position="0 0 0.1" color="#333" width="4"></a-text>
+        </a-plane>
+
+        <!-- Generate Music Button -->
+        <a-box id="generate-music" class="clickable" position="0 1.5 -3" color="#81D4FA" depth="0.5" height="0.5"
+            width="2" event-set__enter="_event: mouseenter; color: #4FC3F7"
+            event-set__leave="_event: mouseleave; color: #81D4FA">
+            <a-text value="Generate Music" align="center" position="0 0 0.3" color="#333" width="4"></a-text>
+        </a-box>
+
+        <!-- Play Music Button -->
+        <a-box id="play-music" class="clickable" position="0 0.8 -3" color="#AED581" depth="0.5" height="0.5" width="2"
+            event-set__enter="_event: mouseenter; color: #9CCC65" event-set__leave="_event: mouseleave; color: #AED581">
+            <a-text value="Play Music" align="center" position="0 0 0.3" color="#333" width="4"></a-text>
+        </a-box>
+
+        <!-- Pause Music Button -->
+        <a-box id="pause-music" class="clickable" position="0 0.1 -3" color="#FFCCBC" depth="0.5" height="0.5" width="2"
+            event-set__enter="_event: mouseenter; color: #FFAB91" event-set__leave="_event: mouseleave; color: #FFCCBC">
+            <a-text value="Pause Music" align="center" position="0 0 0.3" color="#333" width="4"></a-text>
+        </a-box>
+
+        <!-- Entity that plays music -->
+        <a-entity id="music-player" sound></a-entity>
+        <a-entity gltf-model="#splatModel" position="2 1 -4" scale="0.5 0.5 0.5"
+            animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"></a-entity>
+
+        <!-- Camera -->
+        <a-entity camera look-controls wasd-controls position="0 1.6 0">
+            <a-cursor></a-cursor>
+        </a-entity>
+    </a-scene>
+
+    <script>
+        // Debug logging function
+        function logDebug(message) {
+            const debugPanel = document.getElementById('debug-panel');
+            debugPanel.innerHTML += `<div>${message}</div>`;
+            console.log(message);
+        }
+
+        // Load event listeners for assets
+        const skyTexture = document.getElementById('skyTexture');
+
+        skyTexture.addEventListener('load', function () {
+            logDebug('Skybox texture loaded successfully!');
+        });
+
+        skyTexture.addEventListener('error', function () {
+            logDebug('ERROR: Failed to load skybox texture from ' + skyTexture.src);
+            // Try a fallback method for skybox
+            const sky = document.querySelector('a-sky');
+            sky.setAttribute('color', '#87CEEB'); // Set a default blue color as fallback
+            logDebug('Applied fallback blue sky color');
+        });
+
+        // Load event listeners for scene
+        const scene = document.querySelector('a-scene');
+
+        scene.addEventListener('loaded', function () {
+            logDebug('A-Frame scene loaded');
+        });
+
+        // Check if assets are loading
+        document.querySelector('a-assets').addEventListener('timeout', function () {
+            logDebug('WARNING: Asset loading timed out!');
+        });
+
+        // Alternative approach - try direct application to the a-sky element
+        document.addEventListener('DOMContentLoaded', function () {
+            // Wait a moment for A-Frame to initialize
+            setTimeout(function () {
+                const sky = document.querySelector('a-sky');
+                logDebug('Applying direct 360 image to sky element');
+
+                // Try with asset reference first
+                sky.setAttribute('src', '#skyTexture');
+
+                // After a short delay, try with direct path if needed
+                setTimeout(function () {
+                    if (!sky.getAttribute('material').texture) {
+                        logDebug('Direct texture application needed');
+                        sky.setAttribute('src', 'static/scenery.jpg');
+                    }
+                }, 1000);
+            }, 1000);
+        });
+
+        document.querySelector('#generate-music').addEventListener('click', async () => {
+            const userPrompt = prompt("What kind of music would you like?");
+            if (!userPrompt) return;
+
+            const loadingBar = document.querySelector('#loading-bar');
+            loadingBar.setAttribute('visible', 'true');
+            loadingBar.object3D.visible = true;
+
+            try {
+                const res = await fetch('/api/generate-music', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: userPrompt })
+                });
+
+                const data = await res.json();
+
+                if (data.music_urls && data.music_urls.length > 0) {
+                    const musicEntity = document.querySelector('#music-player');
+                    musicEntity.setAttribute('sound', 'src', data.music_urls[0]);
+                    musicEntity.components.sound.stopSound();
+                    musicEntity.components.sound.playSound();
+                } else {
+                    logDebug('Music generation failed: ' + JSON.stringify(data));
+                }
+            } catch (err) {
+                logDebug('Error generating music: ' + err.message);
+            } finally {
+                loadingBar.setAttribute('visible', false);
+            }
+        });
+
+        document.querySelector('#play-music').addEventListener('click', () => {
+            const musicEntity = document.querySelector('#music-player');
+
+            // Stop currently playing sound
+            if (musicEntity.components.sound && musicEntity.components.sound.isPlaying) {
+                musicEntity.components.sound.stopSound();
+            }
+
+            // Reinitialize the sound source to restart playback
+            musicEntity.setAttribute('sound', 'src', 'static/generatedmusic_sound.mp3');
+            musicEntity.components.sound.playSound();
+        });
+
+        document.querySelector('#pause-music').addEventListener('click', () => {
+            const musicEntity = document.querySelector('#music-player');
+            if (musicEntity.components.sound && musicEntity.components.sound.isPlaying) {
+                musicEntity.components.sound.pauseSound();
+            }
+        });
+    </script>
+</body>
+
+</html>
