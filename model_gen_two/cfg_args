@@ -1,0 +1,1 @@
+Namespace(sh_degree=3, source_path='/mnt/d/GitHub/slugmeditate/data_gen_two', model_path='model_gen_two', images='images', depths='', resolution=-1, white_background=False, train_test_exp=False, data_device='cuda', eval=False)
