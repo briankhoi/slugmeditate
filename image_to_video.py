@@ -36,7 +36,7 @@ def generate_video_from_image(client, image_response):
     # Initialize operation for video generation
     operation = client.models.generate_videos(
         model="veo-2.0-generate-001",
-        prompt="using the image scene to create a video of panning left and right over the scene",
+        prompt="a side to side shot in the center of a temple of a cozy vibrant warm relaxing zen temple with no humans or animals in it",
         image=generated_image.image,  # Pass the generated image object directly
         config=types.GenerateVideosConfig(
             aspect_ratio="16:9",  # "16:9" or "9:16"
@@ -59,7 +59,7 @@ def generate_video_from_image(client, image_response):
 
 def main():
     # User prompt for image generation
-    user_prompt = "floating sky island nature"
+    user_prompt = "a side to side shot in the center of a temple open area of a cozy vibrant warm relaxing zen temple with no humans or animals in it"
     
     # Initialize client
     client = genai.Client(api_key=os.getenv("API_KEY"))
