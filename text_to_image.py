@@ -77,7 +77,7 @@ def save_and_display_image(image_response, filename="generated_image.png"):
     return False
 
 def main():
-    user_prompt = "floating sky island nature"
+    user_prompt = "a side to side shot in the open area center of a temple of a cozy vibrant warm relaxing zen temple with no humans or animals in it"
     
     # Initialize client
     client = genai.Client(api_key=os.getenv("API_KEY"))
