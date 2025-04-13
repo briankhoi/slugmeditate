@@ -52,11 +52,8 @@ def generate_video_from_image(client, image_response):
         operation = client.operations.get(operation)
 
     for n, generated_video in enumerate(operation.result.generated_videos):
-        fname = f'with_image_input{n}.mp4'
-        print(fname)
-        # generated_video.video.save(fname)
-        print(generated_video)
-        display(generated_video.video)
+        client.files.download(file=generated_video.video)
+        generated_video.video.save(f'video{n}.mp4') # Saves the video(s)
     
     return None
 
