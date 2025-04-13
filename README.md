@@ -28,6 +28,8 @@ SlugMeditate takes a **text input** (like _"a peaceful forest at dusk"_) and tra
 - **VR Deployment**: Built and displayed the immersive world using **Niantic Studio WebXR**.
 - **Sound Design**: Integrated calming ambient tracks to enhance the meditative experience.
 
+![Pipline](pipeline.png)
+
 ## 🧗 Challenges We Ran Into
 
 - A lot of the **API documentation for Google tools** (like Imagen 3 and Veo 2) was either outdated or didn’t work as expected, so we had to piece things together from multiple sources and experiment through trial and error.
