@@ -1,30 +1,46 @@
+from flask import Flask, render_template, request, jsonify
 from src.services.api_client import APIClient
-from src.utils.file_utils import generate_filename, save_audio_file
 from src.utils.validation_utils import validate_music_prompt
-from src.utils.rewrite_prompt import rewrite_music_prompt
+from src.utils.rewrite_prompt import rewrite_music_prompt, record_audio_from_mic, transcribe_speech_to_text
+from src.utils.file_utils import save_audio_file, generate_filename
 
-def main():
-    """
-    Main function to run the Google Music FX application.
-    Prompts the user for input, generates music, and saves the audio files.
-    
-    Handles exceptions and provides user feedback.
-    """
+app = Flask(__name__, static_folder='static', template_folder='templates')
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/api/generate-music', methods=['POST'])
+def generate_music():
+    data = request.json
+    mode = data.get('mode', 'text')
+
     try:
-        api_client = APIClient()
-        user_input = input("Please enter how you're feeling or what vibe you want the music to reflect: ")
-        music_prompt = rewrite_music_prompt(user_input)
-        print("\nEnhanced music prompt:\n", music_prompt)
-        validate_music_prompt(music_prompt)
-        
-        sounds = api_client.generate_music(music_prompt)
-        
-        for idx, sound in enumerate(sounds, start=1):
-            file_name = generate_filename(music_prompt, idx)
-            save_audio_file(sound["data"], file_name, sound["audioContainer"].lower())
-            
-    except Exception as e:
-        print(f"An error occurred: {e}")
+        if mode == 'speech':
+            record_audio_from_mic()
+            user_input = transcribe_speech_to_text()
+        else:
+            user_input = data.get('prompt')
 
-if __name__ == "__main__":
-    main()
+        if not user_input:
+            return jsonify({"error": "Prompt is required"}), 400
+
+        music_prompt = rewrite_music_prompt(user_input)
+        validate_music_prompt(music_prompt)
+
+        api_client = APIClient()
+        sounds = api_client.generate_music(music_prompt)
+
+        urls = []
+        for idx, sound in enumerate(sounds, start=1):
+            file_name = f"static/{generate_filename('generated_music')}"
+            save_audio_file(sound["data"], file_name, sound["audioContainer"].lower())
+            urls.append(f"/{file_name}")
+
+        return jsonify({"music_urls": urls})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
