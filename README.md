@@ -25,6 +25,8 @@ SlugMeditate takes a **text input** (like _"a peaceful forest at dusk"_) and tra
 - **Text-to-Image**: Generated with **Imagen 3**, part of **Google AI Gemini**'s generative capabilities.
 - **Image-to-Video**: Animated using **Gemini AI Veo 2** for cinematic smoothness and style.
 - **3D Reconstruction**: Used **Gaussian Splatting** to map video into a navigable 3D environment.
+	- Trained an AI 3D Gaussian Splatting model locally on our laptop GPUs implementing the paper "3D Gaussian Splatting for Real-Time Radiance Field Rendering
+": https://github.com/graphdeco-inria/gaussian-splatting
 - **VR Deployment**: Built and displayed the immersive world using **Niantic Studio WebXR**.
 - **Sound Design**: Integrated calming ambient tracks to enhance the meditative experience.
 
